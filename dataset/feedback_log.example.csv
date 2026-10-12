@@ -1,0 +1,2 @@
+timestamp,query,generated_logic,rating,corrected_logic,comment
+2024-03-11T10:00:00+00:00,profit per region,SELECT 1,-1,"SELECT region, ROUND(SUM(profit), 2) AS profit FROM sales GROUP BY region",wrong metric returned

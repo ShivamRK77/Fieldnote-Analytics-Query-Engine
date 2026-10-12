@@ -1,0 +1,38 @@
+{
+  "_comment": "Optional vocabulary that extends data_dictionary.json. Schema-linking aliases only; no answers.",
+  "dimension_aliases": {
+    "customer": "customer_id",
+    "customers": "customer_id",
+    "product": "product_name",
+    "products": "product_name",
+    "category": "product_category",
+    "categories": "product_category",
+    "subcategory": "product_subcategory",
+    "subcategories": "product_subcategory",
+    "segment": "customer_segment",
+    "segments": "customer_segment",
+    "cities": "city",
+    "countries": "country",
+    "regions": "region"
+  },
+  "metric_aliases": {
+    "sales": "revenue",
+    "income": "revenue",
+    "turnover": "revenue",
+    "earnings": "profit",
+    "aov": "avg_order_value",
+    "average order value": "avg_order_value",
+    "avg order value": "avg_order_value",
+    "order count": "orders",
+    "number of orders": "orders",
+    "units": "units",
+    "units sold": "units",
+    "quantity": "units",
+    "shipping": "shipping_cost",
+    "shipping cost": "shipping_cost"
+  },
+  "extra_metrics": {
+    "units": "SUM(quantity)",
+    "shipping_cost": "SUM(shipping_cost)"
+  }
+}

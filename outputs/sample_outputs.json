@@ -1,0 +1,215 @@
+[
+  {
+    "query": "Total sales in India for March",
+    "generated_logic": "SELECT ROUND(SUM(quantity * unit_price * (1 - discount)), 2) AS revenue\nFROM sales\nWHERE country = 'India' AND month = '2024-03'",
+    "result": [
+      {
+        "revenue": 108.0
+      }
+    ],
+    "confidence_score": 0.92,
+    "explanation": "UNDERSTOOD: Aggregate revenue filtered to country in ['India']; period month 2024-03. TERM MAPPING: 'sales' -> metric:revenue; 'time' -> month:2024-03; 'india' -> value:country=India. HOW: A deterministic grammar over the semantic layer translated the question into SQL; the SQL was validated (read-only, whitelisted tables, literal values checked against the data) and executed in a sandboxed SQLite database. Note: no LLM was available, so only the deterministic planner was used (set ANTHROPIC_API_KEY to enable GenAI planning)."
+  },
+  {
+    "query": "Top 2 cities by profit",
+    "generated_logic": "SELECT city, ROUND(SUM(profit), 2) AS profit\nFROM sales\nGROUP BY city\nORDER BY profit DESC, city\nLIMIT 2",
+    "result": [
+      {
+        "city": "New York",
+        "profit": 200.0
+      },
+      {
+        "city": "San Francisco",
+        "profit": 180.0
+      }
+    ],
+    "confidence_score": 0.92,
+    "explanation": "UNDERSTOOD: Rank city by profit (highest first), keep the top 2. TERM MAPPING: 'profit' -> metric:profit; 'cities' -> dimension:city. HOW: A deterministic grammar over the semantic layer translated the question into SQL; the SQL was validated (read-only, whitelisted tables, literal values checked against the data) and executed in a sandboxed SQLite database. Note: no LLM was available, so only the deterministic planner was used (set ANTHROPIC_API_KEY to enable GenAI planning)."
+  },
+  {
+    "query": "Average order value by region",
+    "generated_logic": "SELECT region, ROUND(1.0 * (SUM(quantity * unit_price * (1 - discount))) / NULLIF((COUNT(order_id)), 0), 2) AS avg_order_value\nFROM sales\nGROUP BY region\nORDER BY avg_order_value DESC",
+    "result": [
+      {
+        "region": "NA",
+        "avg_order_value": 1087.47
+      },
+      {
+        "region": "EMEA",
+        "avg_order_value": 799.33
+      },
+      {
+        "region": "APAC",
+        "avg_order_value": 118.5
+      }
+    ],
+    "confidence_score": 0.92,
+    "explanation": "UNDERSTOOD: Aggregate avg_order_value grouped by region. TERM MAPPING: 'average order value' -> metric:avg_order_value; 'region' -> dimension:region. HOW: A deterministic grammar over the semantic layer translated the question into SQL; the SQL was validated (read-only, whitelisted tables, literal values checked against the data) and executed in a sandboxed SQLite database. Note: no LLM was available, so only the deterministic planner was used (set ANTHROPIC_API_KEY to enable GenAI planning)."
+  },
+  {
+    "query": "Which region missed its target in Feb?",
+    "generated_logic": "WITH tgt AS (\n  SELECT region, month, target_revenue FROM targets WHERE month IN ('2024-02')\n),\nact AS (\n  SELECT region, month, SUM(revenue) AS actual FROM sales WHERE month = '2024-02'\n  GROUP BY region, month\n)\nSELECT tgt.region,\n       ROUND(COALESCE(SUM(act.actual), 0), 2) AS actual_revenue,\n       ROUND(SUM(tgt.target_revenue), 2) AS target_revenue,\n       ROUND(COALESCE(SUM(act.actual), 0) - SUM(tgt.target_revenue), 2) AS variance,\n       ROUND(100.0 * COALESCE(SUM(act.actual), 0) / NULLIF(SUM(tgt.target_revenue), 0), 2) AS attainment_pct,\n       CASE WHEN COALESCE(SUM(act.actual), 0) >= SUM(tgt.target_revenue) THEN 'met' ELSE 'missed' END AS status\nFROM tgt LEFT JOIN act ON act.region = tgt.region AND act.month = tgt.month\nGROUP BY tgt.region\nHAVING COALESCE(SUM(act.actual), 0) < SUM(tgt.target_revenue)\nORDER BY tgt.region",
+    "result": [
+      {
+        "region": "APAC",
+        "actual_revenue": 75.0,
+        "target_revenue": 6000.0,
+        "variance": -5925.0,
+        "attainment_pct": 1.25,
+        "status": "missed"
+      },
+      {
+        "region": "EMEA",
+        "actual_revenue": 255.0,
+        "target_revenue": 7500.0,
+        "variance": -7245.0,
+        "attainment_pct": 3.4,
+        "status": "missed"
+      },
+      {
+        "region": "NA",
+        "actual_revenue": 1116.0,
+        "target_revenue": 9500.0,
+        "variance": -8384.0,
+        "attainment_pct": 11.75,
+        "status": "missed"
+      }
+    ],
+    "confidence_score": 0.92,
+    "explanation": "UNDERSTOOD: Actual revenue vs target per region (which fell short of target); period month 2024-02. TERM MAPPING: 'region' -> dimension:region; 'time' -> month:2024-02. HOW: A deterministic grammar over the semantic layer translated the question into SQL; the SQL was validated (read-only, whitelisted tables, literal values checked against the data) and executed in a sandboxed SQLite database. Note: no LLM was available, so only the deterministic planner was used (set ANTHROPIC_API_KEY to enable GenAI planning)."
+  },
+  {
+    "query": "Sales contribution % by category",
+    "generated_logic": "SELECT product_category, ROUND(SUM(quantity * unit_price * (1 - discount)), 2) AS revenue,\n       ROUND(100.0 * SUM(quantity * unit_price * (1 - discount)) / SUM(SUM(quantity * unit_price * (1 - discount))) OVER (), 2) AS contribution_pct\nFROM sales\nGROUP BY product_category\nORDER BY contribution_pct DESC",
+    "result": [
+      {
+        "product_category": "Technology",
+        "revenue": 5402.0,
+        "contribution_pct": 88.06
+      },
+      {
+        "product_category": "Furniture",
+        "revenue": 579.0,
+        "contribution_pct": 9.44
+      },
+      {
+        "product_category": "Office Supplies",
+        "revenue": 153.4,
+        "contribution_pct": 2.5
+      }
+    ],
+    "confidence_score": 0.92,
+    "explanation": "UNDERSTOOD: Share (%) of total revenue contributed by each product_category. TERM MAPPING: 'sales' -> metric:revenue; 'category' -> dimension:product_category. HOW: A deterministic grammar over the semantic layer translated the question into SQL; the SQL was validated (read-only, whitelisted tables, literal values checked against the data) and executed in a sandboxed SQLite database. Note: no LLM was available, so only the deterministic planner was used (set ANTHROPIC_API_KEY to enable GenAI planning)."
+  },
+  {
+    "query": "Top product in each region",
+    "generated_logic": "WITH g AS (\n  SELECT region, product_name, SUM(quantity * unit_price * (1 - discount)) AS value\n  FROM sales\n  GROUP BY region, product_name\n),\nr AS (\n  SELECT *, RANK() OVER (PARTITION BY region ORDER BY value DESC) AS rnk FROM g\n)\nSELECT region, product_name, ROUND(value, 2) AS revenue, rnk AS rank\nFROM r\nWHERE rnk <= 1\nORDER BY region, rnk, product_name",
+    "result": [
+      {
+        "region": "APAC",
+        "product_name": "Ergo Chair",
+        "revenue": 324.0,
+        "rank": 1
+      },
+      {
+        "region": "EMEA",
+        "product_name": "Samsung Galaxy",
+        "revenue": 1288.0,
+        "rank": 1
+      },
+      {
+        "region": "NA",
+        "product_name": "Dell XPS",
+        "revenue": 2068.0,
+        "rank": 1
+      }
+    ],
+    "confidence_score": 0.84,
+    "explanation": "UNDERSTOOD: Rank product_name by revenue (highest first), keep the top 1 within each region. TERM MAPPING: 'product' -> dimension:product_name; 'region' -> dimension:region. HOW: A deterministic grammar over the semantic layer translated the question into SQL; the SQL was validated (read-only, whitelisted tables, literal values checked against the data) and executed in a sandboxed SQLite database. ASSUMPTIONS: no metric named; ranked by revenue (sales). Note: no LLM was available, so only the deterministic planner was used (set ANTHROPIC_API_KEY to enable GenAI planning)."
+  },
+  {
+    "query": "YoY growth in revenue",
+    "generated_logic": "WITH p AS (\n  SELECT year AS period, SUM(quantity * unit_price * (1 - discount)) AS value\n  FROM sales\n  \n  GROUP BY year\n)\nSELECT cur.period,\n       ROUND(cur.value, 2) AS revenue, ROUND(prev.value, 2) AS previous_year_revenue,\n       ROUND(100.0 * (cur.value - prev.value) / NULLIF(prev.value, 0), 2) AS yoy_growth_pct\nFROM p cur LEFT JOIN p prev ON prev.period = CAST(cur.period AS INTEGER) - 1\nWHERE 1=1\nORDER BY cur.period",
+    "result": [
+      {
+        "period": "2024",
+        "revenue": 6134.4,
+        "previous_year_revenue": null,
+        "yoy_growth_pct": null
+      }
+    ],
+    "confidence_score": 0.64,
+    "explanation": "UNDERSTOOD: Year-over-year growth of revenue by year. TERM MAPPING: 'revenue' -> metric:revenue. HOW: A deterministic grammar over the semantic layer translated the question into SQL; the SQL was validated (read-only, whitelisted tables, literal values checked against the data) and executed in a sandboxed SQLite database. WARNINGS: column 'previous_year_revenue' is NULL for every row (e.g. no earlier period to compare against); column 'yoy_growth_pct' is NULL for every row (e.g. no earlier period to compare against). CONFIDENCE FACTORS: some output columns are entirely NULL (insufficient data for the calculation). Note: no LLM was available, so only the deterministic planner was used (set ANTHROPIC_API_KEY to enable GenAI planning)."
+  },
+  {
+    "query": "Revenue of top 3 customers per region",
+    "generated_logic": "WITH g AS (\n  SELECT region, customer_id, SUM(quantity * unit_price * (1 - discount)) AS value\n  FROM sales\n  GROUP BY region, customer_id\n),\nr AS (\n  SELECT *, RANK() OVER (PARTITION BY region ORDER BY value DESC) AS rnk FROM g\n)\nSELECT region, customer_id, ROUND(value, 2) AS revenue, rnk AS rank,\n       ROUND(SUM(value) OVER (PARTITION BY region), 2) AS top_3_total_revenue\nFROM r\nWHERE rnk <= 3\nORDER BY region, rnk, customer_id",
+    "result": [
+      {
+        "region": "APAC",
+        "customer_id": "C001",
+        "revenue": 324.0,
+        "rank": 1,
+        "top_3_total_revenue": 474.0
+      },
+      {
+        "region": "APAC",
+        "customer_id": "C003",
+        "revenue": 75.0,
+        "rank": 2,
+        "top_3_total_revenue": 474.0
+      },
+      {
+        "region": "APAC",
+        "customer_id": "C006",
+        "revenue": 75.0,
+        "rank": 2,
+        "top_3_total_revenue": 474.0
+      },
+      {
+        "region": "EMEA",
+        "customer_id": "C008",
+        "revenue": 1288.0,
+        "rank": 1,
+        "top_3_total_revenue": 2398.0
+      },
+      {
+        "region": "EMEA",
+        "customer_id": "C002",
+        "revenue": 855.0,
+        "rank": 2,
+        "top_3_total_revenue": 2398.0
+      },
+      {
+        "region": "EMEA",
+        "customer_id": "C005",
+        "revenue": 255.0,
+        "rank": 3,
+        "top_3_total_revenue": 2398.0
+      },
+      {
+        "region": "NA",
+        "customer_id": "C009",
+        "revenue": 2068.0,
+        "rank": 1,
+        "top_3_total_revenue": 3262.4
+      },
+      {
+        "region": "NA",
+        "customer_id": "C004",
+        "revenue": 1116.0,
+        "rank": 2,
+        "top_3_total_revenue": 3262.4
+      },
+      {
+        "region": "NA",
+        "customer_id": "C007",
+        "revenue": 78.4,
+        "rank": 3,
+        "top_3_total_revenue": 3262.4
+      }
+    ],
+    "confidence_score": 0.92,
+    "explanation": "UNDERSTOOD: Rank customer_id by revenue (highest first), keep the top 3 within each region. TERM MAPPING: 'revenue' -> metric:revenue; 'customers' -> dimension:customer_id; 'region' -> dimension:region. HOW: A deterministic grammar over the semantic layer translated the question into SQL; the SQL was validated (read-only, whitelisted tables, literal values checked against the data) and executed in a sandboxed SQLite database. Note: no LLM was available, so only the deterministic planner was used (set ANTHROPIC_API_KEY to enable GenAI planning)."
+  }
+]

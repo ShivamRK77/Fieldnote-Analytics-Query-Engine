@@ -1,0 +1,4 @@
+pandas>=2.0
+anthropic>=0.40      # optional: only needed for the GenAI planner
+pytest>=8.0          # optional: tests
+Flask>=3.0           # browser API and production frontend server

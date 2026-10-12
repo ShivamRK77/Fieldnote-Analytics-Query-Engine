@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+dataset/feedback_log.csv
+frontend/node_modules/
+frontend/dist/
